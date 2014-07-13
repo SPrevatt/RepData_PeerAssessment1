@@ -7,7 +7,8 @@ Per the assignment description:
 
 ### Retrieving the data
 
-```{r RetrieveData}
+
+```r
 setwd('~/Reproducible/Project01')
 download.file(
   'http://d396qusza40orc.cloudfront.net/repdata/data/activity.zip',
