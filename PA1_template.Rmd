@@ -8,7 +8,7 @@ Per the assignment description:
 ### Retrieving the data
 
 ```{r RetrieveData}
-setwd('~/Reproducible/Project01')
+setwd('~/Reproducible/RepData_PeerAssessment1')
 download.file(
   'http://d396qusza40orc.cloudfront.net/repdata/data/activity.zip',
   'activity.zip')
@@ -19,13 +19,40 @@ activity <- read.csv('activity.csv')
 
 ## What is mean total number of steps taken per day?
 
-```{r MeanSteps}
-```mean(activity$steps)
+Ignoring days with missing values for the number of steps, we can determine the distribution of the total number of steps in a given day, as well as calculate mean and median values.
 
+```{r MeanSteps}
+# Sum the 5 minute intervals for each day
+dailyTotal<- rowsum(activity$steps, activity$date)
+
+# Plot the distribution
+hist(dailyTotal, 10, main = 'Total Number of Steps Taken Each Day')
+
+# Calculate some statistics
+meanDailyTotal <- mean(dailyTotal[!is.na(dailyTotal)])
+medianDailyTotal <- median(dailyTotal[!is.na(dailyTotal)])
+print(c('The Mean Daily Total is:  ', meanDailyTotal))
+print(c('The Median Daily Total is:  ', medianDailyTotal))
+```
+
+The mean total number of steps taken per day is `r format(meanDailyTotal, scientific = FALSE)`.  
+The median total number of steps taken per day is `r format(medianDailyTotal, scientific = FALSE)`.
 
 ## What is the average daily activity pattern?
 
+```{r DailyPattern}
+meanInterval <- aggregate(steps ~ interval, 
+                          data= activity[!is.na(activity$steps),], 
+                          mean)
+plot(meanInterval, 
+     type='l', 
+     main='Average Daily Activity Pattern', 
+     sub = 'Average Number of Steps per Day by Interval')
+maxInterval <- meanInterval[max(meanInterval$steps),]$interval
+print(c('The Interval with the maximum daily average is:  ', maxInterval))
+```
 
+The Interval with the maximum daily average of `r max(meanInterval$steps)` is `r maxInterval`.
 
 ## Imputing missing values
 
