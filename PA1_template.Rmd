@@ -56,6 +56,82 @@ The Interval with the maximum daily average of `r max(meanInterval$steps)` is `r
 
 ## Imputing missing values
 
+Values for some intervals are missing and marked as NA.
+
+```{r CountMissing}
+Missing <- length(activity[is.na(activity$steps),]$steps)
+print(c('Number missing:  ', Missing))
+```
+
+There are `r Missing` missing intervals in the data set.
+
+Let's imput missing values using the median value of the interval for all days when the interval is non-missing.
+
+```{r ImputeMissing}
+medianInterval <- aggregate(steps ~ interval, 
+                            data= activity[!is.na(activity$steps),], 
+                            median)
+# Create a copy of the activity dataset
+newActivity <- activity
+
+#Impute values
+newActivity[is.na(newActivity$steps),]$steps <- 
+  medianInterval$steps[match(newActivity[is.na(newActivity$steps),]$interval, 
+                             medianInterval$interval)]
+```
+Using imputed values for the values that were originally missing, we can determine the distribution of the total number of steps in a given day, as well as calculate mean and median values.
+
+```{r NewMeanSteps}
+# Sum the 5 minute intervals for each day
+newDailyTotal<- rowsum(newActivity$steps, activity$date)
+
+# Plot the distribution
+hist(newDailyTotal, 10, 
+     main = 'Total Number of Steps Taken Each Day (with imputed values')
+
+# Calculate some statistics
+newMeanDailyTotal <- mean(newDailyTotal[!is.na(newDailyTotal)])
+newMedianDailyTotal <- median(newDailyTotal[!is.na(newDailyTotal)])
+print(c('The Imputed Mean Daily Total is:  ', newMeanDailyTotal))
+print(c('The Imputed Median Daily Total is:  ', newMedianDailyTotal))
+```
+
+The mean total number of steps taken per day after imputing missing values is `r format(newMeanDailyTotal, scientific = FALSE)` compared to the mean total number of steps prior to imputation of `r format(meanDailyTotal, scientific = FALSE)`.  
+The median total number of steps taken per day after imputing missing values is `r format(newMedianDailyTotal, scientific = FALSE)` compared to the median total number of steps prior to the imputation of `r format(medianDailyTotal, scientific = FALSE)`
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Create a new column to indicae weekday and weekend.
+
+```{r GetWeekday}
+activity$weekpart <- 'weekday'
+activity[weekdays(as.Date(activity$date)) %in% c('Sunday', 'Monday'),]$weekpart <- 'weekend'
+```
+
+Let's look at the average number of steps for each interval on weekdays vs. weekends.
+
+```{r Plot Weekpart}
+meanIntervalWeekpart1 <- aggregate(steps ~ interval, 
+                                   data = activity[!is.na(activity$steps) 
+                                                   & activity$weekpart == 'weekend',], 
+                                   mean)
+meanIntervalWeekpart1$weekpart <- 'weekend'
+meanIntervalWeekpart2 <- aggregate(steps ~ interval, 
+                                   data = activity[!is.na(activity$steps) 
+                                                   & activity$weekpart == 'weekday',], 
+                                   mean)
+meanIntervalWeekpart2$weekpart <- 'weekday'
+meanIntervalWeekpart <- rbind(meanIntervalWeekpart1, meanIntervalWeekpart2)
+rm(meanIntervalWeekpart1, meanIntervalWeekpart2)
+library(lattice)
+xyplot(steps~interval|weekpart, 
+       data=meanIntervalWeekpart, 
+       type='l')
+```
+
+## Record environment
+
+``` {r sessionInfo}
+sessionInfo()
+```
